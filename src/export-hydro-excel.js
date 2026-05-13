@@ -93,10 +93,10 @@ function formatVariation(actual, previous) {
   const centimeters = Math.round((actual - previous) * 100);
 
   if (Math.abs(centimeters) >= 100) {
-    return `${formatDecimal(centimeters / 100)}m`;
+    return `${formatDecimal(centimeters / 100)} m`;
   }
 
-  return `${centimeters}cm`;
+  return `${centimeters} cm`;
 }
 
 function formatDecimal(value) {
