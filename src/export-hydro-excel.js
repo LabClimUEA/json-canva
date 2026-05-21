@@ -6,7 +6,9 @@ import process from "node:process";
 
 const apiUrl = process.env.API_URL;
 const bearerToken = process.env.BEARER_TOKEN || process.env.API_TOKEN;
-const outputFile = process.env.OUTPUT_FILE || "output/cotas-hidrologicas.xlsx";
+const outputDir = process.env.OUTPUT_DIR || "output";
+const whatsOutputFile = process.env.WHATS_OUTPUT_FILE || path.join(outputDir, "cota-hidrologicas-whats.xlsx");
+const instagramOutputFile = process.env.INSTAGRAM_OUTPUT_FILE || path.join(outputDir, "cota-hidrologicas-instagram.xlsx");
 const timezone = process.env.TIMEZONE || "America/Manaus";
 
 if (!apiUrl) {
@@ -35,8 +37,11 @@ if (!Array.isArray(payload.data)) {
   throw new Error("Payload inválido: esperado um array em data.");
 }
 
-const headers = ["Data"];
-const row = [formatToday()];
+const reportDate = formatToday();
+const whatsHeaders = ["Data"];
+const whatsRow = [reportDate];
+const instagramHeaders = ["Data"];
+const instagramRow = [reportDate];
 
 for (const item of payload.data) {
   const stationName = item?.station_hydro?.name;
@@ -49,48 +54,59 @@ for (const item of payload.data) {
     continue;
   }
 
-  headers.push(
+  whatsHeaders.push(
     `${stationName} - Cota atual`,
-    `${stationName} - Cota Atual Cd I`,
     `${stationName} - Cota anterior`,
     `${stationName} - Variacao diaria`,
-    `${stationName} - Variacao Diaria Cd I`,
     `${stationName} - Diferenca para o extremo maxima`,
     `${stationName} - Diferenca para o extremo minima`,
   );
-  row.push(
+  whatsRow.push(
     formatCurrentLevel(actual),
-    formatCurrentLevelTitle(actual),
     formatPreviousLevel(previous),
     formatDailyVariation(actual, previous),
-    formatDailyVariationTitle(actual, previous),
     formatDifferenceToMaximum(actual, maxHistoric),
     formatDifferenceToMinimum(actual, minHistoric),
   );
+
+  instagramHeaders.push(
+    `${stationName} - Cota Atual Cd I`,
+    `${stationName} - Variacao Diaria Cd I`,
+  );
+  instagramRow.push(
+    formatCurrentLevelTitle(actual),
+    formatDailyVariationTitle(actual, previous),
+  );
 }
 
-if (headers.length === 1) {
+if (whatsHeaders.length === 1 || instagramHeaders.length === 1) {
   throw new Error("Nenhuma estação com cota atual, cota anterior e extremos históricos válidos foi encontrada no payload.");
 }
 
-const outputPath = path.resolve(outputFile);
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+const whatsOutputPath = await writeWorkbook(whatsOutputFile, whatsHeaders, whatsRow);
+const instagramOutputPath = await writeWorkbook(instagramOutputFile, instagramHeaders, instagramRow);
 
-const workbook = new ExcelJS.Workbook();
-const worksheet = workbook.addWorksheet("Cotas");
+console.log("Excel WhatsApp gerado em " + whatsOutputPath);
+console.log("Excel Instagram gerado em " + instagramOutputPath);
 
-worksheet.addRow(headers);
-worksheet.addRow(row);
-worksheet.columns.forEach((column) => {
-  column.width = 24;
-});
+function writeWorkbook(outputFile, headers, row) {
+  const outputPath = path.resolve(outputFile);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
-worksheet.getRow(1).font = { bold: true };
-worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Cotas");
 
-await workbook.xlsx.writeFile(outputPath);
+  worksheet.addRow(headers);
+  worksheet.addRow(row);
+  worksheet.columns.forEach((column) => {
+    column.width = 24;
+  });
 
-console.log(`Excel gerado em ${outputPath}`);
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+
+  return workbook.xlsx.writeFile(outputPath).then(() => outputPath);
+}
 
 function formatToday() {
   const date = new Intl.DateTimeFormat("pt-BR", {
