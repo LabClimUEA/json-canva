@@ -51,15 +51,19 @@ for (const item of payload.data) {
 
   headers.push(
     `${stationName} - Cota atual`,
+    `${stationName} - Cota Atual Cd I`,
     `${stationName} - Cota anterior`,
     `${stationName} - Variacao diaria`,
+    `${stationName} - Variacao Diaria Cd I`,
     `${stationName} - Diferenca para o extremo maxima`,
     `${stationName} - Diferenca para o extremo minima`,
   );
   row.push(
     formatCurrentLevel(actual),
+    formatCurrentLevelTitle(actual),
     formatPreviousLevel(previous),
     formatDailyVariation(actual, previous),
+    formatDailyVariationTitle(actual, previous),
     formatDifferenceToMaximum(actual, maxHistoric),
     formatDifferenceToMinimum(actual, minHistoric),
   );
@@ -100,15 +104,23 @@ function formatToday() {
 }
 
 function formatCurrentLevel(value) {
-  return `COTA ATUAL: ${formatDecimal(value)}m`;
+  return `COTA ATUAL: ${formatMeters(value)}`;
+}
+
+function formatCurrentLevelTitle(value) {
+  return `Cota Atual: ${formatMeters(value)}`;
 }
 
 function formatPreviousLevel(value) {
-  return `COTA ANTERIOR: ${formatDecimal(value)}m`;
+  return `COTA ANTERIOR: ${formatMeters(value)}`;
 }
 
 function formatDailyVariation(actual, previous) {
   return `VARIAÇÃO DIÁRIA: ${formatDistance(actual - previous)}`;
+}
+
+function formatDailyVariationTitle(actual, previous) {
+  return formatDistanceSpaced(actual - previous);
 }
 
 function formatDifferenceToMaximum(actual, maxHistoric) {
@@ -120,17 +132,27 @@ function formatDifferenceToMinimum(actual, minHistoric) {
 }
 
 function formatMeters(value) {
-  return `${formatDecimal(value)}m`;
+  return formatDistance(value);
 }
 
 function formatDistance(value) {
   const centimeters = Math.round(value * 100);
 
   if (Math.abs(centimeters) >= 100) {
-    return `${formatDecimal(centimeters / 100)}m`;
+    return formatDecimal(centimeters / 100) + "m";
   }
 
-  return `${centimeters}cm`;
+  return centimeters + "cm";
+}
+
+function formatDistanceSpaced(value) {
+  const centimeters = Math.round(value * 100);
+
+  if (Math.abs(centimeters) >= 100) {
+    return formatDecimal(centimeters / 100) + " m";
+  }
+
+  return centimeters + " cm";
 }
 
 function formatDecimal(value) {
