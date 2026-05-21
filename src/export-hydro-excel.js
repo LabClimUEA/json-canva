@@ -42,17 +42,31 @@ for (const item of payload.data) {
   const stationName = item?.station_hydro?.name;
   const actual = toNumberOrNull(item.actual_cota);
   const previous = toNumberOrNull(item.previous_cota);
+  const maxHistoric = toNumberOrNull(item.max_historic);
+  const minHistoric = toNumberOrNull(item.min_historic);
 
-  if (!stationName || actual === null || previous === null) {
+  if (!stationName || actual === null || previous === null || maxHistoric === null || minHistoric === null) {
     continue;
   }
 
-  headers.push(`${stationName} - Cota atual`, `${stationName} - Variacao`);
-  row.push(formatCurrentLevel(actual), formatVariation(actual, previous));
+  headers.push(
+    `${stationName} - Cota atual`,
+    `${stationName} - Cota anterior`,
+    `${stationName} - Variacao diaria`,
+    `${stationName} - Diferenca para o extremo maxima`,
+    `${stationName} - Diferenca para o extremo minima`,
+  );
+  row.push(
+    formatCurrentLevel(actual),
+    formatPreviousLevel(previous),
+    formatDailyVariation(actual, previous),
+    formatDifferenceToMaximum(actual, maxHistoric),
+    formatDifferenceToMinimum(actual, minHistoric),
+  );
 }
 
 if (headers.length === 1) {
-  throw new Error("Nenhuma estação com cota atual e cota anterior válidas foi encontrada no payload.");
+  throw new Error("Nenhuma estação com cota atual, cota anterior e extremos históricos válidos foi encontrada no payload.");
 }
 
 const outputPath = path.resolve(outputFile);
@@ -86,17 +100,37 @@ function formatToday() {
 }
 
 function formatCurrentLevel(value) {
-  return `Cota Atual: ${formatDecimal(value)}m`;
+  return `COTA ATUAL: ${formatDecimal(value)}m`;
 }
 
-function formatVariation(actual, previous) {
-  const centimeters = Math.round((actual - previous) * 100);
+function formatPreviousLevel(value) {
+  return `COTA ANTERIOR: ${formatDecimal(value)}m`;
+}
+
+function formatDailyVariation(actual, previous) {
+  return `VARIAÇÃO DIÁRIA: ${formatDistance(actual - previous)}`;
+}
+
+function formatDifferenceToMaximum(actual, maxHistoric) {
+  return `DIFERENÇA PARA O EXTREMO (MÁXIMA): ${formatMeters(Math.max(maxHistoric - actual, 0))}`;
+}
+
+function formatDifferenceToMinimum(actual, minHistoric) {
+  return `DIFERENÇA PARA O EXTREMO (MÍNIMA): ${formatMeters(Math.max(actual - minHistoric, 0))}`;
+}
+
+function formatMeters(value) {
+  return `${formatDecimal(value)}m`;
+}
+
+function formatDistance(value) {
+  const centimeters = Math.round(value * 100);
 
   if (Math.abs(centimeters) >= 100) {
-    return `${formatDecimal(centimeters / 100)} m`;
+    return `${formatDecimal(centimeters / 100)}m`;
   }
 
-  return `${centimeters} cm`;
+  return `${centimeters}cm`;
 }
 
 function formatDecimal(value) {

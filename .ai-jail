@@ -2,7 +2,7 @@
 # https://github.com/akitaonrails/ai-jail
 # Edit freely. Regenerate with: ai-jail --clean --init
 
-command = []
+command = ["codex"]
 rw_maps = []
 ro_maps = []
 hide_dotdirs = []

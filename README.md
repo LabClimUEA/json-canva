@@ -35,24 +35,35 @@ output/cotas-hidrologicas.xlsx
 ## Formato do Excel
 
 O Excel tera uma unica linha de dados. A coluna A sera o boletim do dia no formato `BOLETIM DIÁRIO dd/mm/aaaa`.
-Para cada estacao com `actual_cota` e `previous_cota` validos, serao criadas duas colunas:
+Para cada estacao com `actual_cota`, `previous_cota`, `max_historic` e `min_historic` validos, serao criadas cinco colunas:
 
 - `<ESTACAO> - Cota atual`
-- `<ESTACAO> - Variacao`
+- `<ESTACAO> - Cota anterior`
+- `<ESTACAO> - Variacao diaria`
+- `<ESTACAO> - Diferenca para o extremo maxima`
+- `<ESTACAO> - Diferenca para o extremo minima`
 
-O valor de cota atual e formatado como `Cota Atual: 11.56m`.
-A variacao e calculada como `actual_cota - previous_cota`.
-Quando o resultado absoluto for menor que 1 metro, ela sera formatada em centimetros, por exemplo `-10cm`, `1cm`, `62cm` ou `99cm`.
-Quando o resultado absoluto for igual ou maior que 1 metro, ela sera formatada em metros, por exemplo `1m` ou `-1.2m`.
+Os valores serao formatados neste fluxo:
+
+- `COTA ATUAL: 13.32m`
+- `COTA ANTERIOR: 13.30m`
+- `VARIAÇÃO DIÁRIA: 2cm`
+- `DIFERENÇA PARA O EXTREMO (MÁXIMA): 1.88m`
+- `DIFERENÇA PARA O EXTREMO (MÍNIMA): 0m`
+
+A variacao diaria e calculada como `actual_cota - previous_cota`.
+A diferenca para a maxima e calculada como `max_historic - actual_cota`.
+A diferenca para a minima e calculada como `actual_cota - min_historic`.
+As diferencas para extremos nunca ficam negativas; nesse caso, o valor gerado sera `0m`.
 
 Exemplo de cabecalhos:
 
 ```text
-Data | TABATINGA - Cota atual | TABATINGA - Variacao | FONTE BOA - Cota atual | FONTE BOA - Variacao
+Data | TABATINGA - Cota atual | TABATINGA - Cota anterior | TABATINGA - Variacao diaria | TABATINGA - Diferenca para o extremo maxima | TABATINGA - Diferenca para o extremo minima
 ```
 
 Exemplo de linha gerada:
 
 ```text
-BOLETIM DIÁRIO 13/05/2026 | Cota Atual: 11.56m | 62cm | Cota Atual: 20.82m | 0cm
+BOLETIM DIÁRIO 18/05/2026 | COTA ATUAL: 11.66m | COTA ANTERIOR: 11.65m | VARIAÇÃO DIÁRIA: 1cm | DIFERENÇA PARA O EXTREMO (MÁXIMA): 2.16m | DIFERENÇA PARA O EXTREMO (MÍNIMA): 14.2m
 ```
